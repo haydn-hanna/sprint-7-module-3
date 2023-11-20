@@ -1,7 +1,9 @@
 // ❗ The ✨ TASKS inside this component are NOT IN ORDER.
 // ❗ Check the README for the appropriate sequence to follow.
 import React from 'react'
+import { useState, useEffect } from 'react'
 import * as Yup from 'yup'
+import axios from 'axios'
 
 const e = { // This is a dictionary of validation error messages.
   // username
@@ -37,7 +39,6 @@ const formSchema = Yup.object().shape({
     .oneOf(['javascript','rust'], e.favLanguageOptions),
   agreement: Yup
     .boolean()
-    .required(e.agreementRequired)
     .oneOf([true],e.agreementOptions)
 });
 
@@ -67,7 +68,9 @@ export default function App() {
   // Whenever the state of the form changes, validate it against the schema
   // and update the state that tracks whether the form is submittable.
   useEffect(()=>{
-
+    formSchema.isValid(form).then(valid => {
+      setSubmitDisabled(!valid)
+    })
   },[form])
 
   const onChange = evt => {
@@ -76,9 +79,10 @@ export default function App() {
     // whether the type of event target is "checkbox" and act accordingly.
     // At every change, you should validate the updated value and send the validation
     // error to the state where we track frontend validation errors.
-    const { name, value, type } = evt.target
-    
-    yup
+    let { name, value, type } = evt.target
+    if(type === 'checkbox'){value = evt.target.checked}
+
+    Yup
     .reach(formSchema, name)
     .validate(value)
     .then(valid => {
@@ -92,8 +96,8 @@ export default function App() {
       });
     });
     
-    setFormState({
-      ...formState, [name]: value
+    setFormValues({
+      ...form, [name]: value
     });
   }
 
@@ -104,57 +108,74 @@ export default function App() {
     // the form. You must put the success and failure messages from the server
     // in the states you have reserved for them, and the form
     // should be re-enabled.
+    evt.preventDefault();
+    setSubmitDisabled(true);
+    axios
+      .post("https://reqres.in/api/users", form)
+      .then(res => {
+        setFormValues({
+          username:'',
+          favFood:'',
+          favLanguage:'',
+          agreement:false
+        })
+        setServerSuccessMessage('Success! New user created!')
+      })
+      .catch(err => {
+        setServerFailureMessage('Error! User not created!')
+      });
+      setSubmitDisabled(false)
   }
 
   return (
     <div> {/* TASK: COMPLETE THE JSX */}
       <h2>Create an Account</h2>
       <form>
-        <h4 className="success">Success! Welcome, new user!</h4>
-        <h4 className="error">Sorry! Username is taken</h4>
+        {serverSuccessMessage && <h4 className="success">{serverSuccessMessage}</h4>}
+        {serverFailureMessage && <h4 className="error">{serverFailureMessage}</h4>}
 
         <div className="inputGroup">
           <label htmlFor="username">Username:</label>
-          <input id="username" name="username" type="text" placeholder="Type Username" />
-          <div className="validation">username is required</div>
+          <input id="username" name="username" type="text" placeholder="Type Username" onChange={onChange} value={form.username}/>
+          {errors.username && <div className="validation">{errors.username}</div>}
         </div>
 
         <div className="inputGroup">
-          <fieldset>
+          <fieldset value={form.favLanguage}>
             <legend>Favorite Language:</legend>
             <label>
-              <input type="radio" name="favLanguage" value="javascript" />
+              <input type="radio" name="favLanguage" value="javascript" onChange={onChange} checked={form.favLanguage==='javascript'}/>
               JavaScript
             </label>
             <label>
-              <input type="radio" name="favLanguage" value="rust" />
+              <input type="radio" name="favLanguage" value="rust" onChange={onChange} checked={form.favLanguage==='rust'}/>
               Rust
             </label>
           </fieldset>
-          <div className="validation">favLanguage is required</div>
+          {errors.favLanguage && <div className="validation">{errors.favLanguage}</div>}
         </div>
 
         <div className="inputGroup">
           <label htmlFor="favFood">Favorite Food:</label>
-          <select id="favFood" name="favFood">
+          <select id="favFood" name="favFood" onChange={onChange} value={form.favFood}>
             <option value="">-- Select Favorite Food --</option>
             <option value="pizza">Pizza</option>
             <option value="spaghetti">Spaghetti</option>
             <option value="broccoli">Broccoli</option>
           </select>
-          <div className="validation">favFood is required</div>
+          {errors.favFood && <div className="validation">{errors.favFood}</div>}
         </div>
 
         <div className="inputGroup">
           <label>
-            <input id="agreement" type="checkbox" name="agreement" />
+            <input id="agreement" type="checkbox" name="agreement" onChange={onChange} checked={form.agreement}/>
             Agree to our terms
           </label>
-          <div className="validation">agreement is required</div>
+          {errors.agreement && <div className="validation">{errors.agreement}</div>}
         </div>
 
         <div>
-          <input type="submit" disabled={false} />
+          <input type="submit" disabled={submitDisabled} onClick={onSubmit}/>
         </div>
       </form>
     </div>
