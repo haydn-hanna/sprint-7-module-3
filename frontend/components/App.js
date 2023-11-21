@@ -144,11 +144,11 @@ export default function App() {
           <fieldset value={form.favLanguage}>
             <legend>Favorite Language:</legend>
             <label>
-              <input type="radio" name="favLanguage" value="javascript" onChange={onChange} checked={form.favLanguage==='javascript'}/>
+              <input id="javascript-radio" type="radio" name="favLanguage" value="javascript" onChange={onChange} checked={form.favLanguage==='javascript'}/>
               JavaScript
             </label>
             <label>
-              <input type="radio" name="favLanguage" value="rust" onChange={onChange} checked={form.favLanguage==='rust'}/>
+              <input id="rust-radio" type="radio" name="favLanguage" value="rust" onChange={onChange} checked={form.favLanguage==='rust'}/>
               Rust
             </label>
           </fieldset>
@@ -175,7 +175,7 @@ export default function App() {
         </div>
 
         <div>
-          <input type="submit" disabled={submitDisabled} onClick={onSubmit}/>
+          <input id="submit" type="submit" disabled={submitDisabled} onClick={onSubmit}/>
         </div>
       </form>
     </div>
